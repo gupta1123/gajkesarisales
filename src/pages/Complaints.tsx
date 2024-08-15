@@ -20,7 +20,7 @@ import { Pagination, PaginationContent, PaginationLink, PaginationItem, Paginati
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CalendarIcon, MoreHorizontal, PlusCircle, Search, Filter, ChevronDown, Clock, User, Building, MapPin, AlertTriangle, CheckCircle, Loader, FileText, Target, ArrowRight, Trash2, Calendar as CalendarIcon2, X } from 'lucide-react';
-
+import './Complaints.css'
 interface Task {
     id: number;
     taskTitle: string;

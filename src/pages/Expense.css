@@ -1,25 +1,20 @@
+
 @media (min-width: 1024px) {
-    .container-reports {
-        
+    .container-expense {
         position: relative;
-        left: 70px;
-        width: 92%;
-    }
-    .container-header{
-        position: relative;
-        left: 150px;
+        left: 225px;
     }
 }
 
 @media (max-width: 768px) {
-    .container-reports {
+    .container-expense {
         width: 400px;
     }
 
 }
 
 @media (max-width: 480px) {
-    .container-reports {
+    .container-expense {
         width: 400px;
     }
 
@@ -28,7 +23,7 @@
 
 /* Mobile-specific enhancements */
 @media (max-width: 640px) {
-    .container-reports {
+    .container-expense {
         width: 400px;
     }
 

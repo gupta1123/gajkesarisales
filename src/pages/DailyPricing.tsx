@@ -159,7 +159,7 @@ const DailyPricingPage = () => {
 
 
     return (
-        <div className="container mx-auto py-8 px-4 max-w-6xl">
+        <div className="container-pricing mx-auto py-8 px-4 max-w-6xl">
             <Card className="shadow-lg">
                 <CardHeader className="bg-white">
                     <CardTitle className="text-3xl font-bold text-black">Pricing Report</CardTitle>

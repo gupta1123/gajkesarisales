@@ -1,7 +1,8 @@
 
 @media (min-width: 1024px) {
-    .container {
+    .container-pricing {
         position: relative;
         left: 225px;
+        width: 100vw;
     }
 }

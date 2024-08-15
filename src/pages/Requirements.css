@@ -89,8 +89,8 @@
 @media (min-width: 1024px) {
     .container {
         position: relative;
-        left: 210px;
-        width: calc(100% - 210px);
+        left: 150px;
+        width: 80%
     }
 }
 

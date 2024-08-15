@@ -207,3 +207,11 @@
     margin-top: 2rem;
     color: #6b7280;
 }
+
+@media (min-width: 1024px) {
+    .container {
+        position: relative;
+        left: 140px;
+        width: 80%;
+    }
+}

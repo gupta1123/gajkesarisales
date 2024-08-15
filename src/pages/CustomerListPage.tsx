@@ -108,7 +108,7 @@ function CustomerListContent() {
     const fetchFilteredCustomers = async ({ queryKey }: { queryKey: any }) => {
         const [_, { page, filters, sortColumn, sortDirection }] = queryKey;
 
-        let url = 'http://ec2-51-20-32-8.eu-north-1.compute.amazonaws.com:8081/store/filteredValues';
+        let url = 'https://api.gajkesaristeels.in/store/filteredValues';
         const queryParams = new URLSearchParams();
 
         Object.entries(filters).forEach(([key, value]) => {
@@ -121,7 +121,7 @@ function CustomerListContent() {
 
         // Special handling for Field Officer filter
         if (filters.employeeName) {
-            url = 'http://ec2-51-20-32-8.eu-north-1.compute.amazonaws.com:8081/store/getByEmployeeWithSort';
+            url = 'https://api.gajkesaristeels.in/store/getByEmployeeWithSort';
             queryParams.append('id', employeeId?.toString() || '');
             queryParams.append('sortBy', sortColumn);
             queryParams.append('sortOrder', sortDirection);
@@ -197,7 +197,7 @@ function CustomerListContent() {
     const handleDeleteConfirm = async () => {
         if (selectedCustomerId) {
             try {
-                const response = await fetch(`http://ec2-51-20-32-8.eu-north-1.compute.amazonaws.com:8081/store/deleteById?id=${selectedCustomerId}`, {
+                const response = await fetch(`https://api.gajkesaristeels.in/store/deleteById?id=${selectedCustomerId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${token}`,

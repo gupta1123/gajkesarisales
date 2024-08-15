@@ -10,7 +10,7 @@ import TargetComponent from '@/components/Target';
 import { RootState } from '../store';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-
+import './Settings.css';
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('salary');
     const authToken = useSelector((state: RootState) => state.auth.token);

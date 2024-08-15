@@ -31,6 +31,7 @@ import {
     PaginationNext
 } from "@/components/ui/pagination";
 import { Checkbox } from "@/components/ui/checkbox";
+import './Expense.css';
 
 interface Expense {
     id: string;
@@ -391,7 +392,7 @@ const ExpensePage = () => {
     };
 
     return (
-        <div className="container mx-auto py-4 px-2 sm:px-4 md:px-8">
+        <div className="container-expense mx-auto py-4 px-2 sm:px-4 md:px-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Expense Management</h1>
         
         {/* Mobile-friendly filter options */}

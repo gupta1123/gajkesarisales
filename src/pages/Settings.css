@@ -38,3 +38,10 @@
     border: 1px solid #e0e0e0;
     border-radius: 4px;
 }
+
+@media (min-width: 1024px) {
+    .container {
+        position: relative;
+        left: 220px;
+    }
+}

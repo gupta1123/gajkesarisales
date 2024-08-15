@@ -8,7 +8,7 @@ import axios from 'axios';
 import { RootState } from '../store';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, BarController, LineController, ChartOptions } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
-
+import './VisitFrequencyReport.css';
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, BarController, LineController);
 
 interface Employee {
@@ -236,7 +236,7 @@ const VisitFrequencyReport: React.FC = () => {
     };
 
     return (
-        <div className="space-y-4 p-4">
+        <div className="container space-y-4 p-4">
             <Card className="shadow-md">
                 <CardContent className="p-4">
                     <h3 className="text-lg font-semibold mb-2">Select Employee</h3>
