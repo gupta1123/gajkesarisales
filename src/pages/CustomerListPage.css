@@ -1,0 +1,7 @@
+@media (min-width: 1024px) {
+    .container {
+        width: 85%;
+        position: relative;
+        left: 116px;
+    }
+}

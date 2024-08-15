@@ -1,0 +1,12 @@
+@media (min-width: 1024px) {
+    .container {
+        
+        position: relative;
+        left: 70px;
+        width: 92%;
+    }
+    .container-header{
+        position: relative;
+        left: 150px;
+    }
+}
