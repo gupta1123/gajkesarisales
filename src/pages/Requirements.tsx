@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RootState } from '../store';
+import { sortBy, uniqBy } from 'lodash';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from '@/components/ui/input';
@@ -78,11 +79,12 @@ const Requirements = () => {
         priority: '',
         status: '',
         search: '',
-        startDate: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
+        startDate: format(new Date(), 'yyyy-MM-dd'),
         endDate: format(new Date(), 'yyyy-MM-dd')
     });
     const [isLoading, setIsLoading] = useState(true);
-    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
+    const [filterEmployees, setFilterEmployees] = useState<{ id: number; name: string }[]>([]);
     const [stores, setStores] = useState<Store[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [expandedRequirement, setExpandedRequirement] = useState<number | null>(null);
@@ -175,7 +177,8 @@ const Requirements = () => {
                 },
             });
             const data = await response.json();
-            setEmployees(data);
+            const sortedEmployees = sortBy(data, (emp) => `${emp.firstName} ${emp.lastName}`);
+            setAllEmployees(sortedEmployees);
         } catch (error) {
             console.error('Error fetching employees:', error);
         }
@@ -200,28 +203,45 @@ const Requirements = () => {
     }, [token, currentPage, filters, fetchTasks]);
 
     useEffect(() => {
+        fetchEmployees();
+    }, [fetchEmployees]);
+
+    useEffect(() => {
         if (isModalOpen) {
-            fetchEmployees();
             fetchStores();
         }
-    }, [isModalOpen, token, fetchEmployees, fetchStores]);
+    }, [isModalOpen, fetchStores]);
+
+    useEffect(() => {
+        if (tasks.length > 0) {
+            const uniqueEmployees = uniqBy(tasks.map(task => ({
+                id: task.assignedToId,
+                name: task.assignedToName
+            })), 'id');
+            const sortedEmployees = sortBy(uniqueEmployees, 'name');
+            setFilterEmployees(sortedEmployees);
+        }
+    }, [tasks]);
 
     useEffect(() => {
         applyFilters();
     }, [tasks, filters]);
 
     const applyFilters = () => {
+        const searchLower = filters.search.toLowerCase();
         const filtered = tasks
             .filter(
                 (task) =>
                     task.taskType === 'requirement' &&
                     (
-                        (task.taskDescription?.toLowerCase() || '').includes(filters.search.toLowerCase()) ||
-                        (task.storeName?.toLowerCase() || '').includes(filters.search.toLowerCase())
+                        (task.taskTitle?.toLowerCase() || '').includes(searchLower) ||
+                        (task.taskDescription?.toLowerCase() || '').includes(searchLower) ||
+                        (task.storeName?.toLowerCase() || '').includes(searchLower) ||
+                        (task.assignedToName?.toLowerCase() || '').includes(searchLower)
                     ) &&
                     (filters.employee === '' || filters.employee === 'all' ? true : task.assignedToId === parseInt(filters.employee)) &&
                     (filters.priority === '' || filters.priority === 'all' ? true : task.priority === filters.priority) &&
-                    (filters.status === '' || filters.status === 'all' ? true : task.status === filters.status) &&
+                    (filters.status === '' || filters.status === 'all' ? task.status !== 'Complete' : task.status === filters.status) &&
                     (filters.startDate === '' || new Date(task.dueDate) >= new Date(filters.startDate)) &&
                     (filters.endDate === '' || new Date(task.dueDate) <= new Date(filters.endDate))
             );
@@ -249,7 +269,7 @@ const Requirements = () => {
             const createdTask = {
                 ...newTask,
                 id: data.id,
-                assignedToName: employees.find(emp => emp.id === newTask.assignedToId)?.firstName + ' ' + employees.find(emp => emp.id === newTask.assignedToId)?.lastName || 'Unknown',
+                assignedToName: allEmployees.find(emp => emp.id === newTask.assignedToId)?.firstName + ' ' + allEmployees.find(emp => emp.id === newTask.assignedToId)?.lastName || 'Unknown',
                 storeName: stores.find(store => store.id === newTask.storeId)?.storeName || '',
             };
 
@@ -328,6 +348,7 @@ const Requirements = () => {
             ...prevFilters,
             [key]: value,
         }));
+        applyFilters();
     };
 
     const getStatusInfo = (status: string): { icon: React.ReactNode; color: string } => {
@@ -540,9 +561,9 @@ const Requirements = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Employees</SelectItem>
-                                {employees.map((employee) => (
+                                {filterEmployees.map((employee) => (
                                     <SelectItem key={employee.id} value={employee.id.toString()}>
-                                        {employee.firstName} {employee.lastName}
+                                        {employee.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -569,7 +590,7 @@ const Requirements = () => {
                                 <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="all">All Open Statuses</SelectItem>
                                 <SelectItem value="Assigned">Assigned</SelectItem>
                                 <SelectItem value="Work In Progress">Work In Progress</SelectItem>
                                 <SelectItem value="Complete">Complete</SelectItem>
@@ -595,7 +616,7 @@ const Requirements = () => {
                         />
                     </div>
                 </div>
-                <Button onClick={() => { fetchTasks(); setIsFilterDrawerOpen(false); }} className="w-full mt-4">
+                <Button onClick={() => { applyFilters(); setIsFilterDrawerOpen(false); }} className="w-full mt-4">
                     Apply Filters
                 </Button>
             </SheetContent>
@@ -627,9 +648,9 @@ const Requirements = () => {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Employees</SelectItem>
-                            {employees.map((employee) => (
+                            {filterEmployees.map((employee) => (
                                 <SelectItem key={employee.id} value={employee.id.toString()}>
-                                    {employee.firstName} {employee.lastName}
+                                    {employee.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -650,7 +671,7 @@ const Requirements = () => {
                             <SelectValue placeholder="Filter by status" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="all">All Open Statuses</SelectItem>
                             <SelectItem value="Assigned">Assigned</SelectItem>
                             <SelectItem value="Work In Progress">Work In Progress</SelectItem>
                             <SelectItem value="Complete">Complete</SelectItem>
@@ -756,7 +777,7 @@ const Requirements = () => {
                                     <Select
                                         value={newTask.assignedToId ? newTask.assignedToId.toString() : ''}
                                         onValueChange={(value) => {
-                                            const selectedEmployee = employees.find(emp => emp.id === parseInt(value));
+                                            const selectedEmployee = allEmployees.find(emp => emp.id === parseInt(value));
                                             setNewTask({ ...newTask, assignedToId: parseInt(value), assignedToName: selectedEmployee ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : 'Unknown' });
                                         }}
                                     >
@@ -764,7 +785,7 @@ const Requirements = () => {
                                             <SelectValue placeholder="Select an employee" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {employees.map((employee) => (
+                                            {allEmployees.map((employee) => (
                                                 <SelectItem key={employee.id} value={employee.id.toString()}>
                                                     {employee.firstName} {employee.lastName}
                                                 </SelectItem>

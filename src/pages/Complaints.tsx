@@ -19,8 +19,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Pagination, PaginationContent, PaginationLink, PaginationItem, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { CalendarIcon, MoreHorizontal, PlusCircle, Search, Filter, ChevronDown, Clock, User, Building, MapPin, AlertTriangle, CheckCircle, Loader, FileText, Target, ArrowRight, Trash2, Calendar as CalendarIcon2, X } from 'lucide-react';
+import { CalendarIcon, MoreHorizontal, PlusCircle, Search, Filter, ChevronDown, Clock, User, Building, MapPin, AlertTriangle, CheckCircle, Loader, FileText, Target, ArrowRight, Trash2, Calendar as CalendarIcon2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import './Complaints.css'
+import { sortBy, uniqBy } from 'lodash';
+
 interface Task {
     id: number;
     taskTitle: string;
@@ -36,6 +38,7 @@ interface Task {
     storeName: string;
     storeCity: string;
     taskType: string;
+    imageCount: number;
 }
 
 interface Employee {
@@ -47,6 +50,14 @@ interface Employee {
 interface Store {
     id: number;
     storeName: string;
+}
+
+interface AttachmentResponse {
+    fileName: string;
+    fileDownloadUri: string;
+    fileType: string;
+    tag: string;
+    size: number;
 }
 
 const Complaints = () => {
@@ -66,7 +77,8 @@ const Complaints = () => {
         storeId: 0,
         storeName: '',
         storeCity: '',
-        taskType: 'complaint'
+        taskType: 'complaint',
+        imageCount: 0
     });
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('general');
@@ -77,15 +89,21 @@ const Complaints = () => {
         priority: '',
         status: '',
         search: '',
-        startDate: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
+        startDate: format(new Date(), 'yyyy-MM-dd'),
         endDate: format(new Date(), 'yyyy-MM-dd')
     });
     const [isLoading, setIsLoading] = useState(true);
-    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
+    const [filterEmployees, setFilterEmployees] = useState<{ id: number; name: string }[]>([]);
     const [stores, setStores] = useState<Store[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [expandedComplaint, setExpandedComplaint] = useState<number | null>(null);
     const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+    const [taskImages, setTaskImages] = useState<string[]>([]);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isLoadingImages, setIsLoadingImages] = useState(false);
 
     const token = useSelector((state: RootState) => state.auth.token);
     const role = useSelector((state: RootState) => state.auth.role);
@@ -174,11 +192,27 @@ const Complaints = () => {
                 },
             });
             const data = await response.json();
-            setEmployees(data);
+            const sortedEmployees = sortBy(data, (emp) => `${emp.firstName} ${emp.lastName}`);
+            setAllEmployees(sortedEmployees);
         } catch (error) {
             console.error('Error fetching employees:', error);
         }
     }, [token]);
+
+    useEffect(() => {
+        fetchEmployees();
+    }, [fetchEmployees]);
+
+    useEffect(() => {
+        if (tasks.length > 0) {
+            const uniqueEmployees = uniqBy(tasks.map(task => ({
+                id: task.assignedToId,
+                name: task.assignedToName
+            })), 'id');
+            const sortedEmployees = sortBy(uniqueEmployees, 'name');
+            setFilterEmployees(sortedEmployees);
+        }
+    }, [tasks]);
 
     const fetchStores = useCallback(async () => {
         try {
@@ -200,27 +234,29 @@ const Complaints = () => {
 
     useEffect(() => {
         if (isModalOpen) {
-            fetchEmployees();
             fetchStores();
         }
-    }, [isModalOpen, token, fetchEmployees, fetchStores]);
+    }, [isModalOpen, token, fetchStores]);
 
     useEffect(() => {
         applyFilters();
     }, [tasks, filters]);
 
     const applyFilters = () => {
+        const searchLower = filters.search.toLowerCase();
         const filtered = tasks
             .filter(
                 (task) =>
                     task.taskType === 'complaint' &&
                     (
-                        (task.taskDescription?.toLowerCase() || '').includes(filters.search.toLowerCase()) ||
-                        (task.storeName?.toLowerCase() || '').includes(filters.search.toLowerCase())
+                        (task.taskTitle?.toLowerCase() || '').includes(searchLower) ||
+                        (task.taskDescription?.toLowerCase() || '').includes(searchLower) ||
+                        (task.storeName?.toLowerCase() || '').includes(searchLower) ||
+                        (task.assignedToName?.toLowerCase() || '').includes(searchLower)
                     ) &&
                     (filters.employee === '' || filters.employee === 'all' ? true : task.assignedToId === parseInt(filters.employee)) &&
                     (filters.priority === '' || filters.priority === 'all' ? true : task.priority === filters.priority) &&
-                    (filters.status === '' || filters.status === 'all' ? true : task.status === filters.status) &&
+                    (filters.status === '' || filters.status === 'all' ? task.status !== 'Complete' : task.status === filters.status) &&
                     (filters.startDate === '' || new Date(task.dueDate) >= new Date(filters.startDate)) &&
                     (filters.endDate === '' || new Date(task.dueDate) <= new Date(filters.endDate))
             );
@@ -248,7 +284,7 @@ const Complaints = () => {
             const createdTask = {
                 ...newTask,
                 id: data.id,
-                assignedToName: employees.find(emp => emp.id === newTask.assignedToId)?.firstName + ' ' + employees.find(emp => emp.id === newTask.assignedToId)?.lastName || 'Unknown',
+                assignedToName: allEmployees.find(emp => emp.id === newTask.assignedToId)?.firstName + ' ' + allEmployees.find(emp => emp.id === newTask.assignedToId)?.lastName || 'Unknown',
                 storeName: stores.find(store => store.id === newTask.storeId)?.storeName || '',
             };
 
@@ -268,7 +304,8 @@ const Complaints = () => {
                 storeId: 0,
                 storeName: '',
                 storeCity: '',
-                taskType: 'complaint'
+                taskType: 'complaint',
+                imageCount: 0
             });
             setIsModalOpen(false);
         } catch (error) {
@@ -327,6 +364,7 @@ const Complaints = () => {
             ...prevFilters,
             [key]: value,
         }));
+        applyFilters();
     };
 
     const getStatusInfo = (status: string): { icon: React.ReactNode; color: string } => {
@@ -400,6 +438,53 @@ const Complaints = () => {
         );
     };
 
+    const fetchTaskImages = async (taskId: number) => {
+        setIsLoadingImages(true);
+        try {
+            // First, fetch the task details
+            const taskResponse = await fetch(`http://ec2-51-20-32-8.eu-north-1.compute.amazonaws.com:8081/task/getById?id=${taskId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (!taskResponse.ok) {
+                throw new Error('Failed to fetch task details');
+            }
+            const taskData = await taskResponse.json();
+
+            // Extract file names from the attachmentResponse
+            const fileNames = taskData.attachmentResponse
+                .filter((attachment: AttachmentResponse) => attachment.tag === 'check-in')
+                .map((attachment: AttachmentResponse) => attachment.fileName);
+
+            // Now fetch each image using the file names
+            const imageUrls = await Promise.all(
+                fileNames.map(async (fileName: string) => {
+                    const imageResponse = await fetch(
+                        `https://api.gajkesaristeels.in/task/downloadFile/${taskId}/check-in/${fileName}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+                    if (imageResponse.ok) {
+                        const blob = await imageResponse.blob();
+                        return URL.createObjectURL(blob);
+                    }
+                    return null;
+                })
+            );
+
+            setTaskImages(imageUrls.filter((url): url is string => url !== null));
+            setIsImagePreviewOpen(true);
+        } catch (error) {
+            console.error('Error fetching task images:', error);
+        } finally {
+            setIsLoadingImages(false);
+        }
+    };
+
     const renderComplaintCard = (task: Task, index: number) => {
         const { icon, color } = getStatusInfo(task.status);
         const isExpanded = expandedComplaint === task.id;
@@ -471,10 +556,21 @@ const Complaints = () => {
                                 {isExpanded ? 'Show less' : 'Show more'}
                             </Button>
                         )}
+                        {task.imageCount > 0 && (
+                            <div className="mt-4">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => fetchTaskImages(task.id)}
+                                >
+                                    View Images ({task.imageCount})
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                     <CardFooter className="bg-gray-50 border-t">
                         <div className="w-full">
-                        
+
                             <Select
                                 value={task.status}
                                 onValueChange={(value) => updateTaskStatus(task.id, value)}
@@ -516,9 +612,9 @@ const Complaints = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Employees</SelectItem>
-                                {employees.map((employee) => (
+                                {filterEmployees.map((employee) => (
                                     <SelectItem key={employee.id} value={employee.id.toString()}>
-                                        {employee.firstName} {employee.lastName}
+                                        {employee.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -545,7 +641,7 @@ const Complaints = () => {
                                 <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="all">All Open Statuses</SelectItem>
                                 <SelectItem value="Assigned">Assigned</SelectItem>
                                 <SelectItem value="Work In Progress">Work In Progress</SelectItem>
                                 <SelectItem value="Complete">Complete</SelectItem>
@@ -603,9 +699,9 @@ const Complaints = () => {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Employees</SelectItem>
-                            {employees.map((employee) => (
+                            {filterEmployees.map((employee) => (
                                 <SelectItem key={employee.id} value={employee.id.toString()}>
-                                    {employee.firstName} {employee.lastName}
+                                    {employee.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -626,7 +722,7 @@ const Complaints = () => {
                             <SelectValue placeholder="Filter by status" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="all">All Open Statuses</SelectItem>
                             <SelectItem value="Assigned">Assigned</SelectItem>
                             <SelectItem value="Work In Progress">Work In Progress</SelectItem>
                             <SelectItem value="Complete">Complete</SelectItem>
@@ -732,7 +828,7 @@ const Complaints = () => {
                                     <Select
                                         value={newTask.assignedToId ? newTask.assignedToId.toString() : ''}
                                         onValueChange={(value) => {
-                                            const selectedEmployee = employees.find(emp => emp.id === parseInt(value));
+                                            const selectedEmployee = allEmployees.find(emp => emp.id === parseInt(value));
                                             setNewTask({ ...newTask, assignedToId: parseInt(value), assignedToName: selectedEmployee ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : 'Unknown' });
                                         }}
                                     >
@@ -740,7 +836,7 @@ const Complaints = () => {
                                             <SelectValue placeholder="Select an employee" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {employees.map((employee) => (
+                                            {allEmployees.map((employee) => (
                                                 <SelectItem key={employee.id} value={employee.id.toString()}>
                                                     {employee.firstName} {employee.lastName}
                                                 </SelectItem>
@@ -810,6 +906,55 @@ const Complaints = () => {
             <div className="mt-8 flex justify-center">
                 {renderPagination()}
             </div>
+
+            {isImagePreviewOpen && (
+                <Dialog open={isImagePreviewOpen} onOpenChange={setIsImagePreviewOpen}>
+                    <DialogContent className="max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>Image Preview</DialogTitle>
+                        </DialogHeader>
+                        {isLoadingImages ? (
+                            <div className="flex justify-center items-center h-64">
+                                <Loader className="w-8 h-8 animate-spin text-primary" />
+                                <span className="ml-2">Loading images...</span>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="relative">
+                                    <img
+                                        src={taskImages[currentImageIndex]}
+                                        alt={`Image ${currentImageIndex + 1}`}
+                                        className="w-full h-auto"
+                                    />
+                                    {taskImages.length > 1 && (
+                                        <>
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="absolute left-2 top-1/2 transform -translate-y-1/2"
+                                                onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? taskImages.length - 1 : prev - 1))}
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                                onClick={() => setCurrentImageIndex((prev) => (prev === taskImages.length - 1 ? 0 : prev + 1))}
+                                            >
+                                                <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                                <p className="text-center mt-2">
+                                    Image {currentImageIndex + 1} of {taskImages.length}
+                                </p>
+                            </>
+                        )}
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 };

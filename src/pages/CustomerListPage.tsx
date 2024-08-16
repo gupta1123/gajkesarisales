@@ -105,6 +105,14 @@ function CustomerListContent() {
     const role = useSelector((state: RootState) => state.auth.role);
     const teamId = useSelector((state: RootState) => state.auth.teamId);
 
+    const handleSort = (column: string) => {
+        if (column === 'totalVisitCount' || column === 'lastVisitDate') {
+            return;
+        }
+        setSortColumn(column);
+        setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    };
+
     const fetchFilteredCustomers = async ({ queryKey }: { queryKey: any }) => {
         const [_, { page, filters, sortColumn, sortDirection }] = queryKey;
 
@@ -240,11 +248,6 @@ function CustomerListContent() {
         setIsModalOpen(false);
     };
 
-    const handleSort = (column: string) => {
-        setSortColumn(column);
-        setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    };
-
     const getInitials = (firstName: string, lastName: string) => {
         return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     };
@@ -318,22 +321,23 @@ function CustomerListContent() {
     };
 
     const renderFilterInput = (name: keyof typeof desktopFilters, label: string, icon: React.ReactNode, isMobile: boolean) => (
-        <div className="space-y-2">
-            <Label htmlFor={name}>{label}</Label>
+        <div className="space-y-1">
+            <Label htmlFor={name} className="sr-only">{label}</Label>
             <div className="relative">
                 <Input
                     id={name}
+                    placeholder={label}
                     value={isMobile ? mobileFilters[name] : desktopFilters[name]}
                     onChange={(e) => isMobile ? handleMobileFilterChange(name, e.target.value) : handleDesktopFilterChange(name, e.target.value)}
-                    className="pl-10"
+                    className="pl-8 pr-8 h-9"
                 />
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none text-gray-400">
                     {icon}
                 </div>
                 {!isMobile && desktopFilters[name] && (
                     <button
                         onClick={() => handleFilterClear(name)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                        className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
                     >
                         <FiX className="h-4 w-4" />
                     </button>
@@ -346,36 +350,37 @@ function CustomerListContent() {
         <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
             <div>
                 <h1 className="text-4xl font-bold mb-6">Customer List</h1>
-                <div className="flex justify-between items-center mb-6">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline">Columns</Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            {['shopName', 'ownerName', 'city', 'state', 'phone', 'monthlySales', 'intentLevel', 'fieldOfficer', 'clientType', 'totalVisits', 'lastVisitDate', 'email'].map(
-                                (column) => (
-                                    <DropdownMenuCheckboxItem
-                                        key={column}
-                                        checked={selectedColumns.includes(column)}
-                                        onCheckedChange={() => handleSelectColumn(column)}
-                                    >
-                                        {column}
-                                    </DropdownMenuCheckboxItem>
-                                )
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <div className="flex space-x-2">
-                        <Button variant="outline" onClick={openModal}>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">Columns</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                {['shopName', 'ownerName', 'city', 'state', 'phone', 'monthlySales', 'intentLevel', 'fieldOfficer', 'clientType', 'totalVisits', 'lastVisitDate', 'email'].map(
+                                    (column) => (
+                                        <DropdownMenuCheckboxItem
+                                            key={column}
+                                            checked={selectedColumns.includes(column)}
+                                            onCheckedChange={() => handleSelectColumn(column)}
+                                        >
+                                            {column}
+                                        </DropdownMenuCheckboxItem>
+                                    )
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button variant="outline" size="sm" onClick={openModal}>
                             Add Customer
                         </Button>
                         <Button
                             variant="outline"
+                            size="sm"
                             onClick={() => setIsDesktopFilterExpanded(!isDesktopFilterExpanded)}
                             className="hidden md:inline-flex"
                         >
                             <FiFilter className="mr-2 h-4 w-4" />
-                            Filters
+                            {isDesktopFilterExpanded ? 'Hide Filters' : 'Show Filters'}
                         </Button>
                         <Button
                             variant="outline"
@@ -390,11 +395,8 @@ function CustomerListContent() {
 
                 {isDesktopFilterExpanded && (
                     <Card className="mb-6 hidden md:block">
-                        <CardHeader>
-                            <CardTitle>Filters</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <CardContent className="p-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {renderFilterInput('storeName', 'Shop Name', <FiUser className="h-4 w-4" />, false)}
                                 {renderFilterInput('ownerName', 'Owner Name', <FiUser className="h-4 w-4" />, false)}
                                 {renderFilterInput('city', 'City', <HomeOutlined className="h-4 w-4" />, false)}
@@ -423,7 +425,7 @@ function CustomerListContent() {
                 <Sheet open={isMobileFilterExpanded} onOpenChange={setIsMobileFilterExpanded}>
                     <SheetContent>
                         <SheetHeader>
-                            <SheetTitle>Filters</SheetTitle>
+                            <SheetTitle>Customer Filters</SheetTitle>
                         </SheetHeader>
                         <div className="py-4 space-y-4">
                             {renderFilterInput('storeName', 'Shop Name', <FiUser className="h-4 w-4" />, true)}
@@ -546,9 +548,9 @@ function CustomerListContent() {
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('ownerName') && (
-                                    <TableHead className="cursor-pointer" onClick={() => handleSort('ownerName')}>
+                                    <TableHead className="cursor-pointer" onClick={() => handleSort('clientFirstName')}>
                                         Owner Name
-                                        {sortColumn === 'ownerName' && (
+                                        {sortColumn === 'clientFirstName' && (
                                             <span className="text-black text-sm">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
                                         )}
                                     </TableHead>
@@ -610,19 +612,13 @@ function CustomerListContent() {
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('totalVisits') && (
-                                    <TableHead className="cursor-pointer" onClick={() => handleSort('totalVisitCount')}>
+                                    <TableHead>
                                         Total Visits
-                                        {sortColumn === 'totalVisitCount' && (
-                                            <span className="text-black text-sm">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
-                                        )}
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('lastVisitDate') && (
-                                    <TableHead className="cursor-pointer" onClick={() => handleSort('lastVisitDate')}>
+                                    <TableHead>
                                         Last Visit Date
-                                        {sortColumn === 'lastVisitDate' && (
-                                            <span className="text-black text-sm">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
-                                        )}
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('email') && (
