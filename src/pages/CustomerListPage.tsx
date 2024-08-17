@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from 'react-query';
@@ -16,7 +16,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
-import { FiPhone, FiUser, FiDollarSign, FiTarget, FiBriefcase, FiFilter, FiX } from "react-icons/fi";
+import { FiPhone, FiUser, FiDollarSign, FiTarget, FiBriefcase, FiFilter, FiX, FiDownload, FiColumns } from "react-icons/fi";
 import { HomeOutlined } from '@ant-design/icons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -26,6 +26,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuCheckboxItem,
     DropdownMenuTrigger,
+    DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import AddCustomerModal from './AddCustomerModal';
 import { AiFillCaretDown } from "react-icons/ai";
@@ -35,7 +36,9 @@ import { useRouter } from 'next/router';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import './CustomerListPage.css'
+import './CustomerListPage.css';
+import { stringify } from 'csv-stringify/browser/esm/sync';
+import { Check } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -106,10 +109,11 @@ function CustomerListContent() {
     const teamId = useSelector((state: RootState) => state.auth.teamId);
 
     const handleSort = (column: string) => {
-        if (column === 'totalVisitCount' || column === 'lastVisitDate') {
-            return;
+        if (column === 'ownerName') {
+            setSortColumn('ownerFirstName');
+        } else {
+            setSortColumn(column);
         }
-        setSortColumn(column);
         setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     };
 
@@ -127,7 +131,6 @@ function CustomerListContent() {
         queryParams.append('size', '10');
         queryParams.append('sort', `${sortColumn},${sortDirection}`);
 
-        // Special handling for Field Officer filter
         if (filters.employeeName) {
             url = 'https://api.gajkesaristeels.in/store/getByEmployeeWithSort';
             queryParams.append('id', employeeId?.toString() || '');
@@ -252,6 +255,52 @@ function CustomerListContent() {
         return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     };
 
+    const handleExport = useCallback(() => {
+        const headers = [
+            'Shop Name',
+            'Owner Name',
+            'City',
+            'State',
+            'Phone',
+            'Monthly Sales',
+            'Intent Level',
+            'Field Officer',
+            'Client Type',
+            'Total Visits',
+            'Last Visit Date',
+            'Email'
+        ];
+
+        const data = customers.map((customer: Customer) => [
+            customer.storeName,
+            `${customer.clientFirstName} ${customer.clientLastName}`,
+            customer.city,
+            customer.state,
+            customer.primaryContact,
+            customer.monthlySale,
+            customer.intent,
+            customer.employeeName,
+            customer.clientType,
+            customer.totalVisitCount,
+            customer.lastVisitDate,
+            customer.email
+        ]);
+
+        const csvContent = stringify([headers, ...data]);
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'customers_export.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }, [customers]);
+
     const renderPagination = () => {
         const pageNumbers = [];
         const displayPages = 5;
@@ -352,24 +401,6 @@ function CustomerListContent() {
                 <h1 className="text-4xl font-bold mb-6">Customer List</h1>
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div className="flex flex-wrap items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">Columns</Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                {['shopName', 'ownerName', 'city', 'state', 'phone', 'monthlySales', 'intentLevel', 'fieldOfficer', 'clientType', 'totalVisits', 'lastVisitDate', 'email'].map(
-                                    (column) => (
-                                        <DropdownMenuCheckboxItem
-                                            key={column}
-                                            checked={selectedColumns.includes(column)}
-                                            onCheckedChange={() => handleSelectColumn(column)}
-                                        >
-                                            {column}
-                                        </DropdownMenuCheckboxItem>
-                                    )
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
                         <Button variant="outline" size="sm" onClick={openModal}>
                             Add Customer
                         </Button>
@@ -381,6 +412,49 @@ function CustomerListContent() {
                         >
                             <FiFilter className="mr-2 h-4 w-4" />
                             {isDesktopFilterExpanded ? 'Hide Filters' : 'Show Filters'}
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <FiColumns className="mr-2 h-4 w-4" />
+                                    Columns
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {[
+                                    { value: 'shopName', label: 'Shop Name' },
+                                    { value: 'ownerName', label: 'Owner Name' },
+                                    { value: 'city', label: 'City' },
+                                    { value: 'state', label: 'State' },
+                                    { value: 'phone', label: 'Phone' },
+                                    { value: 'monthlySales', label: 'Monthly Sales' },
+                                    { value: 'intentLevel', label: 'Intent Level' },
+                                    { value: 'fieldOfficer', label: 'Field Officer' },
+                                    { value: 'clientType', label: 'Client Type' },
+                                    { value: 'totalVisits', label: 'Total Visits' },
+                                    { value: 'lastVisitDate', label: 'Last Visit Date' },
+                                    { value: 'email', label: 'Email' }
+                                ].map((column) => (
+                                    <DropdownMenuCheckboxItem
+                                        key={column.value}
+                                        checked={selectedColumns.includes(column.value)}
+                                        onCheckedChange={() => handleSelectColumn(column.value)}
+                                    >
+                                        <div className="flex items-center justify-between w-full">
+                                            {column.label}
+                                            {selectedColumns.includes(column.value) && (
+                                                <Check className="h-4 w-4" />
+                                            )}
+                                        </div>
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button variant="outline" size="sm" onClick={handleExport}>
+                            <FiDownload className="mr-2 h-4 w-4" />
+                            Export
                         </Button>
                         <Button
                             variant="outline"
@@ -548,9 +622,9 @@ function CustomerListContent() {
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('ownerName') && (
-                                    <TableHead className="cursor-pointer" onClick={() => handleSort('clientFirstName')}>
+                                    <TableHead className="cursor-pointer" onClick={() => handleSort('ownerName')}>
                                         Owner Name
-                                        {sortColumn === 'clientFirstName' && (
+                                        {sortColumn === 'ownerFirstName' && (
                                             <span className="text-black text-sm">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
                                         )}
                                     </TableHead>
@@ -612,13 +686,19 @@ function CustomerListContent() {
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('totalVisits') && (
-                                    <TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleSort('totalVisitCount')}>
                                         Total Visits
+                                        {sortColumn === 'totalVisitCount' && (
+                                            <span className="text-black text-sm">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
+                                        )}
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('lastVisitDate') && (
-                                    <TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleSort('lastVisitDate')}>
                                         Last Visit Date
+                                        {sortColumn === 'lastVisitDate' && (
+                                            <span className="text-black text-sm">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
+                                        )}
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('email') && (
