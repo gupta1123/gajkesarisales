@@ -1,16 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { useQuery, QueryClient, QueryClientProvider } from 'react-query';
+import { useQuery, QueryClient, QueryClientProvider, useQueryClient } from 'react-query';
 import { useRouter } from 'next/router';
 import { RootState } from '../store';
 import VisitsTable from '../components/VisitList/VisitsTable';
-import VisitsFilter from '../components/VisitList/VisitsFilter';
 import { Visit } from '../components/VisitList/types';
 import { format, subDays } from 'date-fns';
 import { stringify } from 'csv-stringify';
 import { Pagination, PaginationContent, PaginationLink, PaginationItem, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import './VisitsList.css';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 const queryClient = new QueryClient();
 
@@ -136,6 +149,7 @@ const VisitsList: React.FC = () => {
   const teamId = useSelector((state: RootState) => state.auth.teamId);
   const state = typeof window !== 'undefined' ? history.state : undefined;
   const { date, employeeName: stateEmployeeName } = state || {};
+  const queryClient = useQueryClient();
 
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [startDate, setStartDate] = useState<Date | undefined>(date ? new Date(date as string) : subDays(new Date(), 7));
@@ -316,12 +330,10 @@ const VisitsList: React.FC = () => {
     }
   }, [sortColumn]);
 
-  const handleFilter = useCallback((filters: { storeName: string; employeeName: string; purpose: string }) => {
+  const handleFilter = useCallback(() => {
     setCurrentPage(1);
-    setStoreName(filters.storeName);
-    setEmployeeName(filters.employeeName);
-    setPurpose(filters.purpose);
-  }, []);
+    queryClient.invalidateQueries(['visits']);
+  }, [queryClient]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -525,25 +537,112 @@ const VisitsList: React.FC = () => {
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <h2 className="text-2xl font-bold mb-4">Visits List</h2>
 
-      <VisitsFilter
-        onFilter={handleFilter}
-        onColumnSelect={handleColumnSelect}
-        onExport={fetchAndExportAllVisits}
-        selectedColumns={selectedColumns}
-        viewMode={viewMode}
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
-        purpose={purpose}
-        setPurpose={setPurpose}
-        storeName={storeName}
-        setStoreName={setStoreName}
-        employeeName={employeeName}
-        setEmployeeName={setEmployeeName}
-      />
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-wrap gap-4">
+          <div className="w-full sm:w-auto">
+            <Label htmlFor="startDate">Start Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="w-full sm:w-auto">
+            <Label htmlFor="endDate">End Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <div className="w-full sm:w-auto">
+            <Label htmlFor="purpose">Purpose</Label>
+            <Input
+              id="purpose"
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              placeholder="Enter purpose"
+            />
+          </div>
+          <div className="w-full sm:w-auto">
+            <Label htmlFor="storeName">Store Name</Label>
+            <Input
+              id="storeName"
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
+              placeholder="Enter store name"
+            />
+          </div>
+          <div className="w-full sm:w-auto">
+            <Label htmlFor="employeeName">Employee Name</Label>
+            <Input
+              id="employeeName"
+              value={employeeName}
+              onChange={(e) => setEmployeeName(e.target.value)}
+              placeholder="Enter employee name"
+            />
+          </div>
+        </div>
+        <div className="flex justify-between items-center">
+          <Button onClick={handleFilter}>Apply Filters</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">Columns</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {['storeName', 'employeeName', 'visit_date', 'purpose', 'outcome', 'visitStart', 'visitEnd', 'intent'].map(column => (
+                <DropdownMenuCheckboxItem
+                  key={column}
+                  checked={selectedColumns.includes(column)}
+                  onCheckedChange={() => handleColumnSelect(column)}
+                >
+                  {column}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {role === 'ADMIN' && (
+            <Button onClick={fetchAndExportAllVisits}>Export</Button>
+          )}
+        </div>
+      </div>
 
-      <br />
       <div className="w-full overflow-x-auto">
         <VisitsTable
           visits={visits.length > 0 ? visits : visitsNavigate}
