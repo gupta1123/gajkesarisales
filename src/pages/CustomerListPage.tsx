@@ -111,6 +111,8 @@ function CustomerListContent() {
     const handleSort = (column: string) => {
         if (column === 'ownerName') {
             setSortColumn('ownerFirstName');
+        } else if (column === 'totalVisits') {
+            setSortColumn('visitCount');
         } else {
             setSortColumn(column);
         }
@@ -129,7 +131,13 @@ function CustomerListContent() {
 
         queryParams.append('page', (page - 1).toString());
         queryParams.append('size', '10');
-        queryParams.append('sort', `${sortColumn},${sortDirection}`);
+
+        if (sortColumn === 'lastVisitDate' || sortColumn === 'visitCount') {
+            queryParams.append('sortBy', sortColumn);
+            queryParams.append('sortOrder', sortDirection);
+        } else {
+            queryParams.append('sort', `${sortColumn},${sortDirection}`);
+        }
 
         if (filters.employeeName) {
             url = 'https://api.gajkesaristeels.in/store/getByEmployeeWithSort';
@@ -686,9 +694,9 @@ function CustomerListContent() {
                                     </TableHead>
                                 )}
                                 {selectedColumns.includes('totalVisits') && (
-                                    <TableHead className="cursor-pointer" onClick={() => handleSort('totalVisitCount')}>
+                                    <TableHead className="cursor-pointer" onClick={() => handleSort('totalVisits')}>
                                         Total Visits
-                                        {sortColumn === 'totalVisitCount' && (
+                                        {sortColumn === 'visitCount' && (
                                             <span className="text-black text-sm">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
                                         )}
                                     </TableHead>
