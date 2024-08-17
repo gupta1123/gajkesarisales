@@ -11,6 +11,7 @@ import { format, subDays } from 'date-fns';
 import { stringify } from 'csv-stringify';
 import { Pagination, PaginationContent, PaginationLink, PaginationItem, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import './VisitsList.css';
+
 const queryClient = new QueryClient();
 
 const fetchVisits = async (

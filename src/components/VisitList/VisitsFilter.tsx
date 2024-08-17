@@ -13,7 +13,23 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetTrigger
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Filter, X, ChevronDown } from 'lucide-react';
 import AddVisits from '@/pages/AddVisits';
-import { debounce } from 'lodash';
+
+// Custom hook for debounced input
+const useDebounce = (value: string, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+};
 
 interface VisitsFilterProps {
     onFilter: (filters: { storeName: string; employeeName: string; purpose: string }, clearFilters: boolean) => void;
@@ -57,30 +73,28 @@ const VisitsFilter: React.FC<VisitsFilterProps> = ({
     const [localEmployeeName, setLocalEmployeeName] = useState(employeeName);
     const [localPurpose, setLocalPurpose] = useState(purpose);
 
-    const debouncedFilter = useCallback(
-        debounce((filters: { storeName: string; employeeName: string; purpose: string }) => {
-            onFilter(filters, false);
-        }, 300),
-        [onFilter]
-    );
+    const debouncedStoreName = useDebounce(localStoreName, 300);
+    const debouncedEmployeeName = useDebounce(localEmployeeName, 300);
+    const debouncedPurpose = useDebounce(localPurpose, 300);
 
     useEffect(() => {
-        debouncedFilter({ storeName: localStoreName, employeeName: localEmployeeName, purpose: localPurpose });
-    }, [localStoreName, localEmployeeName, localPurpose, debouncedFilter]);
+        onFilter({
+            storeName: debouncedStoreName,
+            employeeName: debouncedEmployeeName,
+            purpose: debouncedPurpose
+        }, false);
+    }, [debouncedStoreName, debouncedEmployeeName, debouncedPurpose, onFilter]);
 
     const handleInputChange = (field: 'storeName' | 'employeeName' | 'purpose', value: string) => {
         switch (field) {
             case 'storeName':
                 setLocalStoreName(value);
-                setStoreName(value);
                 break;
             case 'employeeName':
                 setLocalEmployeeName(value);
-                setEmployeeName(value);
                 break;
             case 'purpose':
                 setLocalPurpose(value);
-                setPurpose(value);
                 break;
         }
     };

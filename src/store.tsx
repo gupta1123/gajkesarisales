@@ -16,6 +16,7 @@ interface AuthState {
   officeManagerId: number | null;
   teamMembers: any[];
   isModalOpen: boolean;
+  gajkesariRate: number;
 }
 
 interface LoginResponse {
@@ -69,7 +70,7 @@ export const loginUser = createAsyncThunk<LoginResponse, { username: string; pas
         await dispatch(fetchTeamInfo());
       }
 
-      await dispatch(checkDailyPricing(role));  // Pass role to checkDailyPricing
+      await dispatch(checkDailyPricing(role));
 
       return { role, token };
     } catch (error: any) {
@@ -114,9 +115,16 @@ export const checkDailyPricing = createAsyncThunk<void, string, { rejectValue: s
     const url = `/brand/getByDateRange?start=${today}&end=${today}`;
     try {
       const response = await api.get(url);
-      const isPricingCreated = response.data.some((item: any) => item.brandName === 'Gajkesari');
-      if (!isPricingCreated && role === 'ADMIN') {
-        dispatch(setModalOpen(true));
+      const gajkesariBrand = response.data.find((item: any) => item.brandName === 'Gajkesari');
+
+      if (gajkesariBrand && gajkesariBrand.employeeDto?.id === 86) {
+        dispatch(setGajkesariRate(gajkesariBrand.price));
+        dispatch(setModalOpen(false));
+      } else {
+        dispatch(setGajkesariRate(0));
+        if (role === 'ADMIN') {
+          dispatch(setModalOpen(true));
+        }
       }
     } catch (error: any) {
       return rejectWithValue(error.response?.data || error.message);
@@ -155,6 +163,7 @@ const initialState: AuthState = {
   officeManagerId: null,
   teamMembers: [],
   isModalOpen: false,
+  gajkesariRate: 0,
 };
 
 // Auth Slice
@@ -175,6 +184,9 @@ const authSlice = createSlice({
     },
     setModalOpen: (state, action: PayloadAction<boolean>) => {
       state.isModalOpen = action.payload;
+    },
+    setGajkesariRate: (state, action: PayloadAction<number>) => {
+      state.gajkesariRate = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -211,7 +223,7 @@ const authSlice = createSlice({
 });
 
 // Action Creators
-export const { setToken, setRole, resetState, setModalOpen } = authSlice.actions;
+export const { setToken, setRole, resetState, setModalOpen, setGajkesariRate } = authSlice.actions;
 
 // Store Configuration
 export const store = configureStore({

@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import './DailyPricing.css'
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface Brand {
@@ -21,6 +22,7 @@ interface Brand {
         id: number;
         firstName: string;
         lastName: string;
+        city: string;
     };
     metric: string;
     createdAt: string;
@@ -35,9 +37,11 @@ const DailyPricingPage = () => {
     const [cities, setCities] = useState<string[]>([]);
     const [gajkesariRate, setGajkesariRate] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [showGajkesariRate, setShowGajkesariRate] = useState(false);
     const token = useSelector((state: RootState) => state.auth.token);
     const role = useSelector((state: RootState) => state.auth.role);
     const teamId = useSelector((state: RootState) => state.auth.teamId);
+    const username = useSelector((state: RootState) => state.auth.username);
 
     useEffect(() => {
         fetchData();
@@ -66,22 +70,28 @@ const DailyPricingPage = () => {
             const data: Brand[] = await response.json();
             setBrandData(data);
 
-            // Extract unique cities and ensure no empty values
-            const uniqueCities = Array.from(new Set(data.map(brand => brand.city).filter(city => city.trim() !== "")));
+            const uniqueCities = Array.from(new Set(data.map(brand =>
+                brand.brandName.toLowerCase() === 'gajkesari' ? brand.city : brand.employeeDto?.city
+            ).filter(city => city && city.trim() !== "")));
             setCities(uniqueCities);
 
-            // Set default selected city if not already set
             if (!selectedCity && uniqueCities.length > 0) {
                 setSelectedCity(uniqueCities[0]);
             }
 
-            // Find Gajkesari rate
             const gajkesariBrand = data.find(brand => brand.brandName.toLowerCase() === 'gajkesari');
-            setGajkesariRate(gajkesariBrand ? gajkesariBrand.price : 0);
+            if (gajkesariBrand) {
+                setGajkesariRate(gajkesariBrand.price);
+                setShowGajkesariRate(gajkesariBrand.employeeDto?.firstName === 'Test' && gajkesariBrand.employeeDto?.lastName === '1');
+            } else {
+                setGajkesariRate(0);
+                setShowGajkesariRate(false);
+            }
         } catch (error) {
             console.error('Error fetching brand data:', error);
             setBrandData([]);
             setGajkesariRate(0);
+            setShowGajkesariRate(false);
         }
     }, [role, selectedDate, teamId, token, selectedCity]);
 
@@ -105,10 +115,15 @@ const DailyPricingPage = () => {
         }
     }, [role, selectedDate, teamId, token]);
 
-    const filteredBrands = brandData.filter(brand => brand.city === selectedCity);
+    const filteredBrands = brandData.filter(brand =>
+        brand.brandName.toLowerCase() === 'gajkesari' ? brand.city === selectedCity : brand.employeeDto?.city === selectedCity
+    );
 
     const calculatePriceChange = (currentPrice: number, brandName: string) => {
-        const previousBrand = previousDayData.find(brand => brand.brandName === brandName && brand.city === selectedCity);
+        const previousBrand = previousDayData.find(brand =>
+            brand.brandName === brandName &&
+            (brand.brandName.toLowerCase() === 'gajkesari' ? brand.city === selectedCity : brand.employeeDto?.city === selectedCity)
+        );
         if (previousBrand) {
             const change = currentPrice - previousBrand.price;
             const prefix = change >= 0 ? '+' : '-';
@@ -138,7 +153,6 @@ const DailyPricingPage = () => {
                 beginAtZero: true,
                 ticks: {
                     callback: (tickValue: string | number) => {
-                        // Ensure that tickValue is a number before formatting
                         const value = typeof tickValue === 'number' ? tickValue : parseFloat(tickValue);
                         return `₹${value}`;
                     },
@@ -156,7 +170,6 @@ const DailyPricingPage = () => {
             },
         },
     };
-
 
     return (
         <div className="container-pricing mx-auto py-8 px-4 max-w-6xl">
@@ -186,7 +199,7 @@ const DailyPricingPage = () => {
                                 className="w-[150px]"
                             />
                         </div>
-                        {gajkesariRate > 0 && (
+                        {showGajkesariRate && gajkesariRate > 0 && (
                             <div className="text-right">
                                 <h2 className="text-2xl">
                                     Gajkesari Rate: <span className="font-bold">₹{gajkesariRate}/ton</span>
@@ -207,15 +220,25 @@ const DailyPricingPage = () => {
                                         <tr className="bg-gray-100">
                                             <th className="p-3 text-left">Competitor</th>
                                             <th className="p-3 text-right">Price (₹/ton)</th>
-                                            {/* <th className="p-3 text-right">Change from Previous Day</th> */}
+                                            <th className="p-3 text-right pr-6">Price Change</th>
+                                            <th className="p-3 text-left pl-6">Field Officer</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {filteredBrands.map((brand) => (
                                             <tr key={brand.id} className="border-b border-gray-300 hover:bg-gray-50">
                                                 <td className="p-3">{brand.brandName}</td>
-                                                <td className="p-3 text-right">₹{brand.price}/ton</td>
-                                                {/* <td className="p-3 text-right">{calculatePriceChange(brand.price, brand.brandName)}</td> */}
+                                                <td className="p-3 text-right">₹{brand.price.toFixed(2)}</td>
+                                                <td className="p-3 text-right pr-6">
+                                                    {calculatePriceChange(brand.price, brand.brandName)}
+                                                </td>
+                                                <td className="p-3 pl-6">
+                                                    {brand.brandName.toLowerCase() === 'gajkesari'
+                                                        ? brand.city
+                                                        : brand.employeeDto
+                                                            ? `${brand.employeeDto.firstName} ${brand.employeeDto.lastName}`
+                                                            : 'N/A'}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
