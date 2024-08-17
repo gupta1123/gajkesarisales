@@ -356,6 +356,7 @@ const Salary: React.FC<{ authToken: string | null }> = ({ authToken }) => {
             <table className={styles.table}>
                 <thead>
                     <tr>
+                        <th>Employee Name</th>
                         <th>Full Days</th>
                         <th>Half Days</th>
                         <th>Base Salary</th>
@@ -369,6 +370,7 @@ const Salary: React.FC<{ authToken: string | null }> = ({ authToken }) => {
                 <tbody>
                     {currentRows.map((row, index) => (
                         <tr key={index}>
+                            <td>{`${row.employeeFirstName} ${row.employeeLastName}`}</td>
                             <td>{row.fullDays}</td>
                             <td>{row.halfDays}</td>
                             <td>₹{Math.round(calculateBaseSalary(row.salary || 0, (row.fullDays + row.halfDays * 0.5), getDaysInMonth(Number(selectedYear), Number(selectedMonth))))}</td>
@@ -417,11 +419,11 @@ const Salary: React.FC<{ authToken: string | null }> = ({ authToken }) => {
                                     <AvatarFallback>{getInitials(row.employeeFirstName, row.employeeLastName)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <CardTitle>{`${row.employeeFirstName} ${row.employeeLastName}`}</CardTitle>
+                                    <CardTitle className="text-lg">{`${row.employeeFirstName} ${row.employeeLastName}`}</CardTitle>
                                     <p className="text-sm text-muted-foreground">Field Officer</p>
                                 </div>
                             </div>
-                            <div className="text-2xl font-bold text-green-600">
+                            <div className="text-xl font-bold text-green-600">
                                 ₹{calculateTotalSalary(row, Number(selectedYear), Number(selectedMonth))}
                             </div>
                         </div>
