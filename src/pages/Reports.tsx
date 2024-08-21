@@ -20,9 +20,11 @@ const Reports = () => {
 
     return (
         <div className="container-reports mx-auto px-4 py-8">
-            <h1 className="container-header text-3xl font-bold mb-8">Reports</h1>
-
-            <div className="container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <div>
+            <h1 className="text-3xl font-bold mb-8">Reports</h1>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                
                 {tabs.map((tab) => (
                     <Card
                         key={tab.id}

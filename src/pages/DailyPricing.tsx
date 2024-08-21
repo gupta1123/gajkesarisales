@@ -119,19 +119,6 @@ const DailyPricingPage = () => {
         brand.brandName.toLowerCase() === 'gajkesari' ? brand.city === selectedCity : brand.employeeDto?.city === selectedCity
     );
 
-    const calculatePriceChange = (currentPrice: number, brandName: string) => {
-        const previousBrand = previousDayData.find(brand =>
-            brand.brandName === brandName &&
-            (brand.brandName.toLowerCase() === 'gajkesari' ? brand.city === selectedCity : brand.employeeDto?.city === selectedCity)
-        );
-        if (previousBrand) {
-            const change = currentPrice - previousBrand.price;
-            const prefix = change >= 0 ? '+' : '-';
-            return `${prefix}₹${Math.abs(change).toFixed(2)}`;
-        }
-        return 'N/A';
-    };
-
     const chartData = {
         labels: filteredBrands.map(brand => brand.brandName).concat(['Gajkesari']),
         datasets: [
@@ -215,24 +202,20 @@ const DailyPricingPage = () => {
                     ) : (
                         <>
                             <div className="overflow-x-auto mb-8">
-                                <table className="w-full border-collapse border border-gray-300">
+                                <table className="w-full border-collapse border-none shadow-lg rounded-lg overflow-hidden">
                                     <thead>
-                                        <tr className="bg-gray-100">
-                                            <th className="p-3 text-left">Competitor</th>
-                                            <th className="p-3 text-right">Price (₹/ton)</th>
-                                            <th className="p-3 text-right pr-6">Price Change</th>
-                                            <th className="p-3 text-left pl-6">Field Officer</th>
+                                        <tr className="bg-gray-50">
+                                            <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Competitor</th>
+                                            <th className="p-4 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">Price (₹/ton)</th>
+                                            <th className="p-4 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">Field Officer</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="bg-white divide-y divide-gray-200">
                                         {filteredBrands.map((brand) => (
-                                            <tr key={brand.id} className="border-b border-gray-300 hover:bg-gray-50">
-                                                <td className="p-3">{brand.brandName}</td>
-                                                <td className="p-3 text-right">₹{brand.price.toFixed(2)}</td>
-                                                <td className="p-3 text-right pr-6">
-                                                    {calculatePriceChange(brand.price, brand.brandName)}
-                                                </td>
-                                                <td className="p-3 pl-6">
+                                            <tr key={brand.id} className="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                                                <td className="p-4 whitespace-nowrap text-sm font-medium text-gray-900">{brand.brandName}</td>
+                                                <td className="p-4 whitespace-nowrap text-sm text-gray-500 text-right">₹{brand.price.toFixed(2)}</td>
+                                                <td className="p-4 whitespace-nowrap text-sm text-gray-500 text-right">
                                                     {brand.brandName.toLowerCase() === 'gajkesari'
                                                         ? brand.city
                                                         : brand.employeeDto

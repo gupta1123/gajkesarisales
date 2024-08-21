@@ -236,7 +236,7 @@ const VisitFrequencyReport: React.FC = () => {
     };
 
     return (
-        <div className="container space-y-4 p-4">
+        <div className="container-visitfrequency space-y-4 p-4">
             <Card className="shadow-md">
                 <CardContent className="p-4">
                     <h3 className="text-lg font-semibold mb-2">Select Employee</h3>

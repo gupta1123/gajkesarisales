@@ -66,7 +66,7 @@
 }
 
 @media (max-width: 640px) {
-    .container {
+    .container-requirements {
         padding-left: 1rem;
         padding-right: 1rem;
     }
@@ -87,7 +87,7 @@
 }
 
 @media (min-width: 1024px) {
-    .container {
+    .container-requirements {
         position: relative;
         left: 150px;
         width: 80%
@@ -95,7 +95,7 @@
 }
 
 @media (max-width: 768px) {
-    .container {
+    .container-requirements {
         position: relative;
         top: 20px;
     }

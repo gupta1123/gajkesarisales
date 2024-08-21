@@ -675,7 +675,7 @@ const Complaints = () => {
     );
 
     return (
-        <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="container-complaints mx-auto py-12 px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold mb-6">Complaints Management</h1>
             <div className="mb-6 flex flex-wrap gap-4 items-center">
                 <div className="flex-grow lg:flex-grow-0 lg:w-64 flex items-center gap-2">

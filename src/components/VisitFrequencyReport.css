@@ -1,7 +1,6 @@
 @media (min-width: 1024px) {
-    .container {
+    .container-visitfrequency {
         position: relative;
-        left: 70px;
         width: 92%;
     }
 

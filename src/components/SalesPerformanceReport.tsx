@@ -326,7 +326,7 @@ const SalesPerformanceReport: React.FC = () => {
     };
 
     return (
-        <div className="container space-y-4 p-4 md:space-y-6 md:p-6">
+        <div className="container-salesPerformanceReport space-y-4 p-4 md:space-y-6 md:p-6">
             <Card className="shadow-md">
                 <CardContent className="p-4 md:p-6">
                     <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Sales Performance Report</h2>

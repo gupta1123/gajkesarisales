@@ -1,16 +1,16 @@
 
 @media (min-width: 1024px) {
-    .container {
-        width: 90%;
+    .container-newCustomersReport {
+        width: 80%;
         position: relative;
-        left: 70px;
+        left: -155px;
     }
 }
 
 @media (min-width: 1400px) {
-    .container {
-        width: 90%;
+    .container-newCustomersReport {
+        width: 80%;
         position: relative;
-        left: 70px;
+        left: -155px;
     }
 }

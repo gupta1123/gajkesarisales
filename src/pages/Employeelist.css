@@ -1,4 +1,4 @@
-.container {
+.container-employee {
     max-width: 1200px;
   }
   
@@ -124,7 +124,7 @@
   }
 
   @media (min-width: 1024px) {
-    .container {
+    .container-employee {
         width:130%;
         position: relative;
         left: 240px;

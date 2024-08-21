@@ -1,7 +1,8 @@
 @media (min-width: 1024px) {
-    .container {
+    .container-visit {
         position: relative;
-        left: 210px;
+        left: 175px;
+        width: 92%;
         
     }
 }

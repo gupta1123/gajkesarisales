@@ -9,8 +9,8 @@ import Teams from './Teams';
 import TargetComponent from '@/components/Target';
 import { RootState } from '../store';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import './Settings.css';
+
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('salary');
     const authToken = useSelector((state: RootState) => state.auth.token);
@@ -24,32 +24,28 @@ export default function Settings() {
     ];
 
     return (
-        <div className="container mx-auto py-4 px-2 sm:py-8 sm:px-4">
-            <Card className="w-full max-w-6xl mx-auto">
+        <div className="settingsContainer">
+            <Card className="new w-full max-w-6xl mx-auto">
                 <CardHeader>
                     <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-center">
                         Settings
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="flex justify-center mb-6 bg-background">
-                            {tabs.map((tab) => (
-                                <TabsTrigger
-                                    key={tab.id}
-                                    value={tab.id}
-                                    className="px-6 py-3 text-sm font-medium transition-all border-b-2 border-transparent hover:border-primary focus:outline-none focus:border-primary data-[state=active]:border-primary data-[state=active]:text-primary"
-                                >
-                                    {tab.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
+                    <div className="tabHeader">
                         {tabs.map((tab) => (
-                            <TabsContent key={tab.id} value={tab.id} className="mt-6">
-                                {tab.component}
-                            </TabsContent>
+                            <button
+                                key={tab.id}
+                                className={`tabButton ${activeTab === tab.id ? 'activeTab' : ''}`}
+                                onClick={() => setActiveTab(tab.id)}
+                            >
+                                {tab.label}
+                            </button>
                         ))}
-                    </Tabs>
+                    </div>
+                    <div className="tabContent">
+                        {tabs.find(tab => tab.id === activeTab)?.component}
+                    </div>
                 </CardContent>
             </Card>
         </div>

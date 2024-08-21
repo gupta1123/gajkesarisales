@@ -2,7 +2,8 @@
 @media (min-width: 1024px) {
     .container-expense {
         position: relative;
-        left: 225px;
+            left: 230px;
+            width: 100%
     }
 }
 

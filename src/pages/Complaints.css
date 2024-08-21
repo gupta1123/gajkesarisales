@@ -101,7 +101,7 @@
 }
 
 @media (min-width: 1024px) {
-    .container {
+    .container-complaints {
         position: relative;
         left: 195px;
         width: 95%;
@@ -209,7 +209,7 @@
 }
 
 @media (min-width: 1024px) {
-    .container {
+    .container-complaints {
         position: relative;
         left: 140px;
         width: 80%;

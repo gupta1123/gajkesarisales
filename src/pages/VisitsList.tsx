@@ -534,19 +534,20 @@ const VisitsList: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <h2 className="text-2xl font-bold mb-4">Visits List</h2>
+    <div className="container-visit mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <h2 className="text-2xl font-bold mb-6">Visits List</h2>
 
-      <div className="mb-6 space-y-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="w-full sm:w-auto">
-            <Label htmlFor="startDate">Start Date</Label>
+      <div className="mb-6 space-y-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="w-full md:w-auto">
+            <Label htmlFor="startDate" className="mb-1 block">Start Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
+                  id="startDate"
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full md:w-[180px] justify-start text-left font-normal",
                     !startDate && "text-muted-foreground"
                   )}
                 >
@@ -564,14 +565,15 @@ const VisitsList: React.FC = () => {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="w-full sm:w-auto">
-            <Label htmlFor="endDate">End Date</Label>
+          <div className="w-full md:w-auto">
+            <Label htmlFor="endDate" className="mb-1 block">End Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
+                  id="endDate"
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full md:w-[180px] justify-start text-left font-normal",
                     !endDate && "text-muted-foreground"
                   )}
                 >
@@ -589,57 +591,60 @@ const VisitsList: React.FC = () => {
               </PopoverContent>
             </Popover>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <div className="w-full sm:w-auto">
-            <Label htmlFor="purpose">Purpose</Label>
+          <div className="w-full md:w-auto">
+            <Label htmlFor="purpose" className="mb-1 block">Purpose</Label>
             <Input
               id="purpose"
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               placeholder="Enter purpose"
+              className="w-full md:w-[180px]"
             />
           </div>
-          <div className="w-full sm:w-auto">
-            <Label htmlFor="storeName">Store Name</Label>
+          <div className="w-full md:w-auto">
+            <Label htmlFor="storeName" className="mb-1 block">Store Name</Label>
             <Input
               id="storeName"
               value={storeName}
               onChange={(e) => setStoreName(e.target.value)}
               placeholder="Enter store name"
+              className="w-full md:w-[180px]"
             />
           </div>
-          <div className="w-full sm:w-auto">
-            <Label htmlFor="employeeName">Employee Name</Label>
+          <div className="w-full md:w-auto">
+            <Label htmlFor="employeeName" className="mb-1 block">Employee Name</Label>
             <Input
               id="employeeName"
               value={employeeName}
               onChange={(e) => setEmployeeName(e.target.value)}
               placeholder="Enter employee name"
+              className="w-full md:w-[180px]"
             />
           </div>
         </div>
         <div className="flex justify-between items-center">
           <Button onClick={handleFilter}>Apply Filters</Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Columns</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {['storeName', 'employeeName', 'visit_date', 'purpose', 'outcome', 'visitStart', 'visitEnd', 'intent'].map(column => (
-                <DropdownMenuCheckboxItem
-                  key={column}
-                  checked={selectedColumns.includes(column)}
-                  onCheckedChange={() => handleColumnSelect(column)}
-                >
-                  {column}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {role === 'ADMIN' && (
-            <Button onClick={fetchAndExportAllVisits}>Export</Button>
-          )}
+          <div className="flex space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">Columns</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {['storeName', 'employeeName', 'visit_date', 'purpose', 'outcome', 'visitStart', 'visitEnd', 'intent'].map(column => (
+                  <DropdownMenuCheckboxItem
+                    key={column}
+                    checked={selectedColumns.includes(column)}
+                    onCheckedChange={() => handleColumnSelect(column)}
+                  >
+                    {column}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {role === 'ADMIN' && (
+              <Button onClick={fetchAndExportAllVisits}>Export</Button>
+            )}
+          </div>
         </div>
       </div>
 

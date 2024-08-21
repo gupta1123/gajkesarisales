@@ -67,17 +67,15 @@ const Salary: React.FC<{ authToken: string | null }> = ({ authToken }) => {
         return { value: year.toString(), label: year.toString() };
     });
 
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
+
     useEffect(() => {
         const handleResize = () => {
-            setIsDesktop(window.innerWidth >= 768);
+            setIsMobileView(window.innerWidth <= 768);
         };
 
-        handleResize();
         window.addEventListener('resize', handleResize);
-
-        return () => {
-            window.removeEventListener('resize', handleResize);
-        };
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const fetchEmployeeData = useCallback(async () => {
@@ -409,92 +407,106 @@ const Salary: React.FC<{ authToken: string | null }> = ({ authToken }) => {
     );
 
     const renderMobileView = () => (
-        <div className="space-y-4">
+        <div className={styles.mobileContainer}>
             {currentRows.map((row, index) => (
-                <Card key={index} className="overflow-hidden">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <Avatar className="h-12 w-12 bg-blue-500">
-                                    <AvatarFallback>{getInitials(row.employeeFirstName, row.employeeLastName)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <CardTitle className="text-lg">{`${row.employeeFirstName} ${row.employeeLastName}`}</CardTitle>
-                                    <p className="text-sm text-muted-foreground">Field Officer</p>
-                                </div>
-                            </div>
-                            <div className="text-xl font-bold text-green-600">
-                                ₹{calculateTotalSalary(row, Number(selectedYear), Number(selectedMonth))}
+                <Collapsible key={index} className={styles.card}>
+                    <CollapsibleTrigger className={styles.cardHeader}>
+                        <div className={styles.employeeInfo}>
+                            <Avatar className={styles.avatar}>
+                                <AvatarFallback>{getInitials(row.employeeFirstName, row.employeeLastName)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <CardTitle className={styles.employeeName}>{`${row.employeeFirstName} ${row.employeeLastName}`}</CardTitle>
+                                <p className={styles.employeeRole}>Field Officer</p>
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Collapsible>
-                            <CollapsibleTrigger className="flex items-center justify-between w-full py-2">
-                                <span className="text-sm font-medium">View Details</span>
-                                <ChevronDownIcon className="h-5 w-5" />
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="pt-2">
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div className="flex items-center space-x-2">
-                                        <CalendarIcon className="h-5 w-5 text-blue-500" />
-                                        <span>Full Days: <span className="font-semibold">{row.fullDays}</span></span>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <CalendarIcon className="h-5 w-5 text-purple-500" />
-                                        <span>Half Days: <span className="font-semibold">{row.halfDays}</span></span>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <CurrencyDollarIcon className="h-5 w-5 text-green-500" />
-                                        <span>Base Salary: <span className="font-semibold">₹{Math.round(calculateBaseSalary(row.salary || 0, (row.fullDays + row.halfDays * 0.5), getDaysInMonth(Number(selectedYear), Number(selectedMonth))))}</span></span>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <TruckIcon className="h-5 w-5 text-yellow-500" />
-                                        <span>TA: <span className="font-semibold">₹{Math.round(calculateTravelAllowance(row.distanceTravelledByCar || 0, row.distanceTravelledByBike || 0, row.pricePerKmCar || 0, row.pricePerKmBike || 0))}</span></span>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <CurrencyDollarIcon className="h-5 w-5 text-red-500" />
-                                        <span>DA: <span className="font-semibold">₹{Math.round(((employeeData[row.employeeId]?.dearnessAllowance || 0) * row.fullDays) + ((employeeData[row.employeeId]?.dearnessAllowance || 0) / 2 * row.halfDays))}</span></span>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <CalculatorIcon className="h-5 w-5 text-indigo-500" />
-                                        <span>Expense: <span className="font-semibold">₹{Math.round(row.statsDto?.approvedExpense || 0)}</span></span>
-                                    </div>
+                        <div className={styles.totalSalary}>
+                            ₹{calculateTotalSalary(row, Number(selectedYear), Number(selectedMonth))}
+                        </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className={styles.cardContent}>
+                        <div className={styles.salaryDetails}>
+                            <div className={styles.detailItem}>
+                                <CalendarIcon className={styles.icon} />
+                                <div>
+                                    <span className={styles.label}>Full Days:</span>
+                                    <span className={styles.value}>{row.fullDays}</span>
                                 </div>
-                            </CollapsibleContent>
-                        </Collapsible>
+                            </div>
+                            <div className={styles.detailItem}>
+                                <CalendarIcon className={styles.icon} />
+                                <div>
+                                    <span className={styles.label}>Half Days:</span>
+                                    <span className={styles.value}>{row.halfDays}</span>
+                                </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                                <CurrencyDollarIcon className={styles.icon} />
+                                <div>
+                                    <span className={styles.label}>Base Salary:</span>
+                                    <span className={styles.value}>₹{Math.round(calculateBaseSalary(row.salary || 0, (row.fullDays + row.halfDays * 0.5), getDaysInMonth(Number(selectedYear), Number(selectedMonth))))}</span>
+                                </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                                <TruckIcon className={styles.icon} />
+                                <div>
+                                    <span className={styles.label}>TA:</span>
+                                    <span className={styles.value}>₹{Math.round(calculateTravelAllowance(row.distanceTravelledByCar || 0, row.distanceTravelledByBike || 0, row.pricePerKmCar || 0, row.pricePerKmBike || 0))}</span>
+                                </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                                <CalculatorIcon className={styles.icon} />
+                                <div>
+                                    <span className={styles.label}>DA:</span>
+                                    <span className={styles.value}>₹{Math.round(((employeeData[row.employeeId]?.dearnessAllowance || 0) * row.fullDays) + ((employeeData[row.employeeId]?.dearnessAllowance || 0) / 2 * row.halfDays))}</span>
+                                </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                                <CurrencyDollarIcon className={styles.icon} />
+                                <div>
+                                    <span className={styles.label}>Expense:</span>
+                                    <span className={styles.value}>₹{Math.round(row.statsDto?.approvedExpense || 0)}</span>
+                                </div>
+                            </div>
+                        </div>
                         {getAnomalyCount(row.employeeId) > 0 && (
-                            <div className="mt-4">
+                            <div className={styles.anomalyWarning}>
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                className="w-full"
                                                 onClick={() => calculateDistances(row.employeeId)}
                                                 disabled={isCalculating[row.employeeId]}
+                                                className={styles.anomalyButton}
                                             >
-                                                <ExclamationTriangleIcon className="mr-2 h-4 w-4 text-yellow-500" />
-                                                {isCalculating[row.employeeId] ? 'Calculating...' : `Calculate Missing Distances (${getAnomalyCount(row.employeeId)})`}
+                                                {isCalculating[row.employeeId] ? (
+                                                    "Calculating..."
+                                                ) : (
+                                                    <>
+                                                        <ExclamationTriangleIcon className={styles.warningIcon} />
+                                                        {getAnomalyCount(row.employeeId)} anomalies detected
+                                                    </>
+                                                )}
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>{getAnomalyCount(row.employeeId)} day(s) with checkout but no distance traveled</p>
+                                            <p>Click to recalculate distances for days with anomalies</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </CollapsibleContent>
+                </Collapsible>
             ))}
         </div>
     );
 
     return (
         <div className={styles.salaryContainer}>
-            <h2 className="text-2xl font-bold mb-4">Salary Details</h2>
+            <h2 className={styles.pageTitle}>Salary Details</h2>
             <div className={styles.filterContainer}>
                 <div className={styles.selectContainer}>
                     <Select onValueChange={setSelectedYear} defaultValue={selectedYear}>
@@ -541,8 +553,16 @@ const Salary: React.FC<{ authToken: string | null }> = ({ authToken }) => {
             </div>
             {isDataAvailable ? (
                 <>
-                    {isDesktop ? renderDesktopView() : renderMobileView()}
-                    <Pagination className="mt-4">
+                    {isMobileView ? (
+                        <div className={styles.cardView}>
+                            {renderMobileView()}
+                        </div>
+                    ) : (
+                        <div className={styles.tableView}>
+                            {renderDesktopView()}
+                        </div>
+                    )}
+                    <Pagination className={styles.pagination}>
                         <PaginationContent>
                             {currentPage > 1 && (
                                 <PaginationItem>

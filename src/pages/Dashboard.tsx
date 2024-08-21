@@ -637,7 +637,7 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container-dashboard mx-auto py-8 px-4">
       {selectedState && !selectedEmployee ? (
         <>
           <div className="flex justify-between items-center mb-8">
